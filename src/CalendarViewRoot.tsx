@@ -1,3 +1,4 @@
+import "./calendar-view.css";
 import { useApp } from "./hooks/useApp";
 
 export const CalendarViewRoot = () => {

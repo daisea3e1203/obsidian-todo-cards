@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
 				entry: "src/main.ts",
 				formats: ["cjs"],
 				fileName: () => "main",
+				cssFileName: "styles",
 			},
 			target: "es2018",
 			sourcemap: prod ? false : "inline",
