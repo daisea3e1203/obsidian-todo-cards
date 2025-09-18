@@ -1,8 +1,8 @@
 import { useContext } from "react";
-import { CalendarViewContext } from "../CalendarViewContext";
+import { ObsidianContext } from "./ObsidianContext";
 
 export const useApp = () => {
-	const context = useContext(CalendarViewContext);
+	const context = useContext(ObsidianContext);
 	if (!context) {
 		throw new Error("useApp must be used within a CalendarViewContext");
 	}

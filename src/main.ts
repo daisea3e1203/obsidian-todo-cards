@@ -8,7 +8,10 @@ import {
 	Setting,
 	WorkspaceLeaf,
 } from "obsidian";
-import { DabinCalendarView, VIEW_TYPE_DABIN_CALENDAR } from "./calendar-view";
+import {
+	DabinCalendarView,
+	VIEW_TYPE_DABIN_CALENDAR,
+} from "./calendar-view/index";
 
 // Remember to rename these classes and interfaces!
 

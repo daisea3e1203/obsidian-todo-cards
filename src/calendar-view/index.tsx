@@ -1,8 +1,8 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { Root, createRoot } from "react-dom/client";
 import { StrictMode } from "react";
-import { CalendarViewRoot } from "./CalendarViewRoot";
-import { CalendarViewContext } from "./CalendarViewContext";
+import { CalendarViewRoot } from "./Root";
+import { ObsidianContext } from "../hooks/ObsidianContext";
 
 export const VIEW_TYPE_DABIN_CALENDAR = "dabin-calendar-view";
 
@@ -22,9 +22,9 @@ export class DabinCalendarView extends ItemView {
 		this.root = createRoot(this.containerEl);
 		this.root.render(
 			<StrictMode>
-				<CalendarViewContext.Provider value={{ app: this.app }}>
+				<ObsidianContext.Provider value={{ app: this.app }}>
 					<CalendarViewRoot />
-				</CalendarViewContext.Provider>
+				</ObsidianContext.Provider>
 			</StrictMode>
 		);
 	}

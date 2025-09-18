@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import builtins from "builtin-modules";
 import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 // Banner identical to your esbuild setup
 const banner = `/*
@@ -32,6 +33,11 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		plugins: [tailwindcss()],
+		resolve: {
+			alias: {
+				"@": path.resolve(__dirname, "src"),
+			},
+		},
 		build: {
 			// Lib mode to control format/file name
 			lib: {
