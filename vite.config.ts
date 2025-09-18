@@ -1,6 +1,6 @@
-// vite.config.ts
 import { defineConfig } from "vite";
-import * as builtins from "builtin-modules";
+import builtins from "builtin-modules";
+import tailwindcss from "@tailwindcss/vite";
 
 // Banner identical to your esbuild setup
 const banner = `/*
@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
 	const prod = mode === "production";
 
 	return {
+		plugins: [tailwindcss()],
 		build: {
 			// Lib mode to control format/file name
 			lib: {

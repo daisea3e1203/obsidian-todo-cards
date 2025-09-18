@@ -19,8 +19,8 @@
       "ES7"
     ]
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
+  "include": ["src"],
+  "references": [
+    { "path": "./tsconfig.node.json" }
   ]
 }
