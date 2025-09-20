@@ -24,26 +24,40 @@ export class DabinCalendarView extends ItemView {
 	protected async onOpen(): Promise<void> {
 		this.root = createRoot(this.containerEl);
 
-		// Render after dataview index is ready.
-
-		this.app.workspace.on("active-leaf-change", (leaf: WorkspaceLeaf) => {
-			// @ts-ignore
-			console.log("Active leaf changed to file:", leaf.view?.file?.path);
-			this.render();
-		});
+		// this.app.workspace.on("active-leaf-change", (leaf: WorkspaceLeaf) => {
+		// 	// @ts-ignore
+		// 	console.log("Active leaf changed to file:", leaf.view?.file?.path);
+		// 	this.render();
+		// });
 
 		// @ts-ignore
-		this.app.workspace.on("editor-change", (file: TFile) => {
-			console.log("File modified:", file?.path);
-			this.debouncedRender();
-		});
+		// this.app.workspace.on("editor-change", (file: TFile) => {
+		// 	console.log("File modified:", file?.path);
+		// 	this.debouncedRender();
+		// });
 
+		// Render after dataview index is ready.
 		this.registerEvent(
 			// @ts-ignore
 			this.app.metadataCache.on("dataview:index-ready", (file: TFile) => {
 				console.log("Dataview index ready for file:", file?.path);
 				this.render();
 			})
+		);
+
+		// Render after dataview changes.
+		this.registerEvent(
+			this.app.metadataCache.on(
+				// @ts-ignore
+				"dataview:metadata-change",
+				(file: TFile) => {
+					console.log(
+						"Dataview metadata changed for file:",
+						file?.path
+					);
+					this.render();
+				}
+			)
 		);
 	}
 
@@ -54,7 +68,7 @@ export class DabinCalendarView extends ItemView {
 		this.debouncedRenderTimeout = setTimeout(() => {
 			console.log("Debounced render.");
 			this.render();
-		}, 1000);
+		}, 500);
 	}
 
 	render() {

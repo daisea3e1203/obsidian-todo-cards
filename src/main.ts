@@ -30,15 +30,17 @@ export default class DabinCalendarPlugin extends Plugin {
 		await this.loadSettings();
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText("Status Bar Text");
+		// const statusBarItemEl = this.addStatusBarItem();
+		// statusBarItemEl.setText("Status Bar Text");
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: "open-sample-modal-simple",
-			name: "Open sample modal (simple)",
-			callback: () => {
-				new SampleModal(this.app).open();
+			id: "dabin-calendar-start",
+			name: "Add scheduled metadata to list item",
+			editorCallback: (editor: Editor, _view: MarkdownView) => {
+				const today = new Date();
+				const formattedDate = today.toISOString().split("T")[0];
+				editor.replaceSelection(`[scheduled::${formattedDate}]`);
 			},
 		});
 		// This adds an editor command that can perform some operation on the current editor instance
@@ -76,9 +78,9 @@ export default class DabinCalendarPlugin extends Plugin {
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			console.log("click", evt);
-		});
+		// this.registerDomEvent(document, "click", (evt: MouseEvent) => {
+		// 	console.log("click", evt);
+		// });
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(

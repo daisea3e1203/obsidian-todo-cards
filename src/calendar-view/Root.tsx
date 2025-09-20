@@ -18,16 +18,16 @@ export const CalendarViewRoot = () => {
 	// @ts-ignore
 	const dv: any = app.plugins.plugins.dataview.api as DataviewPageApi;
 	const page = dv.page(`${activeFile.path}`);
-	console.log("PAGE: ", page);
+	// console.log("PAGE: ", page);
 	const file = page?.file;
-	console.log("FILE: ", file);
+	// console.log("FILE: ", file);
 	const lists = file?.lists;
-	console.log("LISTS: ", lists);
-	if (lists) {
-		for (const list of lists) {
-			console.log("LIST: ", list);
-		}
-	}
+	// console.log("LISTS: ", lists);
+	// if (lists) {
+	// 	for (const list of lists) {
+	// 		console.log("LIST: ", list);
+	// 	}
+	// }
 
 	// Create initial state.
 	const [colNum, setColNum] = useState(5);
@@ -40,9 +40,8 @@ export const CalendarViewRoot = () => {
 	}
 
 	return (
-		<div className="dark p-4">
-			<h4>Tasks from {activeFile.basename}</h4>
-
+		<div className="h-full overflow-y-auto dark p-4">
+			{/* <h4>Tasks from {activeFile.basename}</h4> */}
 			<DatePicker date={date} setDate={setDate} />
 
 			<div className="flex gap-4 items-center justify-center h-12">
@@ -79,6 +78,7 @@ type ObsidianList = {
 	text: string; // The text of the list item.
 	completed?: boolean; // Whether the list item is completed.
 	completion?: DateTime; // The date of the completion of the list item.
+	scheduled?: DateTime; // The date of the scheduled of the list item.
 	due?: DateTime; // The date of the due of the list item.
 };
 
@@ -97,6 +97,11 @@ function DayTile(props: { day: Date; lists: ObsidianList[] }) {
 			} else if (
 				list.completion &&
 				list.completion.toFormat("yyyy-MM-dd") === label
+			) {
+				return true;
+			} else if (
+				list.scheduled &&
+				list.scheduled.toFormat("yyyy-MM-dd") === label
 			) {
 				return true;
 			}
@@ -121,7 +126,7 @@ function DayTile(props: { day: Date; lists: ObsidianList[] }) {
 					const parent = props.lists.find(
 						(l) => l.line === list.parent
 					);
-					console.log("PARENT: ", parent);
+					// console.log("PARENT: ", parent);
 					return (
 						<div key={list.line} className="flex flex-col gap-2">
 							<div className="flex justify-between">
@@ -131,6 +136,14 @@ function DayTile(props: { day: Date; lists: ObsidianList[] }) {
 									</p>
 								)}
 								<div className="flex gap-2">
+									{list.scheduled && (
+										<Tag
+											title="Scheduled"
+											value={list.scheduled.toFormat(
+												"yyyy-MM-dd"
+											)}
+										/>
+									)}
 									{list.due && (
 										<Tag
 											title="Due"
