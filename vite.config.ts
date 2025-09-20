@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import builtins from "builtin-modules";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import react from "@vitejs/plugin-react";
 
 // Banner identical to your esbuild setup
 const banner = `/*
@@ -32,7 +33,7 @@ export default defineConfig(({ mode }) => {
 	const prod = mode === "production";
 
 	return {
-		plugins: [tailwindcss()],
+		plugins: [react(), tailwindcss()],
 		resolve: {
 			alias: {
 				"@": path.resolve(__dirname, "src"),
