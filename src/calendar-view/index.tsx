@@ -9,6 +9,7 @@ export const VIEW_TYPE_DABIN_CALENDAR = "dabin-calendar-view";
 
 export class DabinCalendarView extends ItemView {
 	root: Root | null = null;
+	debouncedRenderTimeout: NodeJS.Timeout | null = null;
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -31,6 +32,12 @@ export class DabinCalendarView extends ItemView {
 			this.render();
 		});
 
+		// @ts-ignore
+		this.app.workspace.on("editor-change", (file: TFile) => {
+			console.log("File modified:", file?.path);
+			this.debouncedRender();
+		});
+
 		this.registerEvent(
 			// @ts-ignore
 			this.app.metadataCache.on("dataview:index-ready", (file: TFile) => {
@@ -38,6 +45,16 @@ export class DabinCalendarView extends ItemView {
 				this.render();
 			})
 		);
+	}
+
+	debouncedRender() {
+		if (this.debouncedRenderTimeout) {
+			clearTimeout(this.debouncedRenderTimeout);
+		}
+		this.debouncedRenderTimeout = setTimeout(() => {
+			console.log("Debounced render.");
+			this.render();
+		}, 1000);
 	}
 
 	render() {
