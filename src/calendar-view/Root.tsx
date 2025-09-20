@@ -4,6 +4,22 @@ import { useApp } from "@/hooks/useApp";
 import { Slider } from "@/components/ui/slider";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTime } from "luxon";
+import { cn } from "@/lib/utils";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectValue,
+} from "@/components/ui/select";
+import { SelectTrigger } from "@/components/ui/select";
+import {
+	Columns2Icon,
+	Rows2Icon,
+	SquareCheckIcon,
+	SquareIcon,
+} from "lucide-react";
+
+type Layout = "vertical" | "horizontal";
 
 export const CalendarViewRoot = () => {
 	const app = useApp();
@@ -30,19 +46,38 @@ export const CalendarViewRoot = () => {
 	// }
 
 	// Create initial state.
-	const [colNum, setColNum] = useState(5);
+	const [colNum, setColNum] = useState(6);
 	const yesterday = new Date();
 	yesterday.setDate(yesterday.getDate() - 1);
 	const [date, setDate] = useState<Date>(yesterday);
+	const [layout, setLayout] = useState<Layout>("vertical");
 
 	if (!lists) {
 		return <div>No lists found in the file.</div>;
 	}
 
 	return (
-		<div className="h-full overflow-y-auto dark p-4">
+		<div className="h-full w-full overflow-auto dark p-4">
 			{/* <h4>Tasks from {activeFile.basename}</h4> */}
-			<DatePicker date={date} setDate={setDate} />
+			<div className="flex gap-4">
+				<DatePicker date={date} setDate={setDate} />
+				<Select
+					value={layout}
+					onValueChange={(value) => setLayout(value as Layout)}
+				>
+					<SelectTrigger>
+						<SelectValue placeholder="Select layout" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="vertical">
+							<Rows2Icon />
+						</SelectItem>
+						<SelectItem value="horizontal">
+							<Columns2Icon />
+						</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
 
 			<div className="flex gap-4 items-center justify-center h-12">
 				<div>{colNum}</div>
@@ -54,7 +89,14 @@ export const CalendarViewRoot = () => {
 					onValueChange={(value) => setColNum(value[0])}
 				/>
 			</div>
-			<div className="grid gap-2">
+			<div
+				className={cn(
+					"gap-2",
+					layout === "vertical" && "grid",
+					layout === "horizontal" &&
+						"grid grid-flow-col auto-cols-[160px]"
+				)}
+			>
 				{Array.from({ length: colNum }).map((_, index) => {
 					const day = new Date(date);
 					day.setDate(date.getDate() + index);
@@ -63,6 +105,7 @@ export const CalendarViewRoot = () => {
 							key={day.toISOString()}
 							day={day}
 							lists={lists}
+							layout={layout}
 						/>
 					);
 				})}
@@ -82,7 +125,7 @@ type ObsidianList = {
 	due?: DateTime; // The date of the due of the list item.
 };
 
-function DayTile(props: { day: Date; lists: ObsidianList[] }) {
+function DayTile(props: { day: Date; lists: ObsidianList[]; layout: Layout }) {
 	const { day } = props;
 	const yyyy = day.getFullYear();
 	const mm = String(day.getMonth() + 1).padStart(2, "0");
@@ -120,7 +163,14 @@ function DayTile(props: { day: Date; lists: ObsidianList[] }) {
 
 	return (
 		<div className="border rounded-md p-2">
-			<p className="font-bold">{label}</p>
+			<div className="flex justify-between">
+				<p className="font-bold">{label}</p>
+				<p className="text-sm text-gray-500">
+					{day
+						.toLocaleDateString(undefined, { weekday: "long" })
+						.slice(0, 3)}
+				</p>
+			</div>
 			<div className="mt-2 flex flex-col gap-2">
 				{lists.map((list) => {
 					const parent = props.lists.find(
@@ -135,36 +185,44 @@ function DayTile(props: { day: Date; lists: ObsidianList[] }) {
 										{parent.text}
 									</p>
 								)}
-								<div className="flex gap-2">
-									{list.scheduled && (
-										<Tag
-											title="Scheduled"
-											value={list.scheduled.toFormat(
-												"yyyy-MM-dd"
-											)}
-										/>
-									)}
-									{list.due && (
-										<Tag
-											title="Due"
-											value={list.due.toFormat(
-												"yyyy-MM-dd"
-											)}
-										/>
-									)}
-									{list.completion && (
-										<Tag
-											title="Completed"
-											value={list.completion.toFormat(
-												"yyyy-MM-dd"
-											)}
-										/>
-									)}
-								</div>
+								{props.layout === "vertical" && (
+									<div className="flex gap-2">
+										{list.scheduled && (
+											<Tag
+												title="Scheduled"
+												value={list.scheduled.toFormat(
+													"yyyy-MM-dd"
+												)}
+											/>
+										)}
+										{list.due && (
+											<Tag
+												title="Due"
+												value={list.due.toFormat(
+													"yyyy-MM-dd"
+												)}
+											/>
+										)}
+										{list.completion && (
+											<Tag
+												title="Completed"
+												value={list.completion.toFormat(
+													"yyyy-MM-dd"
+												)}
+											/>
+										)}
+									</div>
+								)}
 							</div>
 
-							<p>
-								<span>{list.completed ? "✅" : "❌"}</span>
+							<p className="flex gap-1 items-center">
+								<span>
+									{list.completed ? (
+										<SquareCheckIcon className="size-4" />
+									) : (
+										<SquareIcon className="size-4" />
+									)}
+								</span>
 								<span>{list.text}</span>
 							</p>
 							<p className="flex gap-4"></p>
