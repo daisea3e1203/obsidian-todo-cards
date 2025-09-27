@@ -48,7 +48,8 @@ const updateDateFieldInDoc = async (
 				);
 			} else {
 				// Add new field at the end of the line
-				updatedLine = line.trim() + ` [${fieldType}::${formattedDate}]`;
+				updatedLine =
+					line.trimEnd() + ` [${fieldType}::${formattedDate}]`;
 			}
 
 			lines[lineNumber] = updatedLine;
@@ -169,7 +170,8 @@ function DayTile(props: {
 	// Filter lists.
 	const lists = props.lists
 		.filter((list) => {
-			const dates = [list.due, list.completion, list.scheduled];
+			// const dates = [list.due, list.completion, list.scheduled];
+			const dates = [list.due, list.scheduled];
 			for (const date of dates) {
 				if (
 					date &&
@@ -214,7 +216,7 @@ function DayTile(props: {
 								key={list.line}
 								className="flex flex-col gap-1"
 							>
-								<div className="flex justify-between">
+								<div className="flex justify-between flex-wrap">
 									{parent && (
 										<p className="text-sm text-gray-500">
 											{parent.text}
@@ -224,7 +226,7 @@ function DayTile(props: {
 										<div className="flex gap-2">
 											{[
 												{
-													label: "Scheduled",
+													label: "Sched",
 													value: list.scheduled,
 													fieldType: "scheduled",
 												},
@@ -233,38 +235,32 @@ function DayTile(props: {
 													value: list.due,
 													fieldType: "due",
 												},
-												{
-													label: "Completed",
-													value: list.completion,
-													fieldType: "completion",
-												},
+												// {
+												// 	label: "Completed",
+												// 	value: list.completion,
+												// 	fieldType: "completion",
+												// },
 											].map(
 												({
 													label,
 													value,
 													fieldType,
 												}) => {
-													if (
-														value &&
-														!!value.toFormat
-													) {
-														return (
-															<Tag
-																key={label}
-																title={label}
-																value={value}
-																list={list}
-																fieldType={
-																	fieldType
-																}
-																app={props.app}
-																activeFile={
-																	props.activeFile
-																}
-															/>
-														);
-													}
-													return null;
+													return (
+														<Tag
+															key={label}
+															title={label}
+															value={value}
+															list={list}
+															fieldType={
+																fieldType
+															}
+															app={props.app}
+															activeFile={
+																props.activeFile
+															}
+														/>
+													);
 												}
 											)}
 										</div>
@@ -294,7 +290,7 @@ function DayTile(props: {
 
 function Tag(props: {
 	title: string;
-	value: DateTime;
+	value?: DateTime;
 	onClick?: () => void;
 	list?: ObsidianList;
 	fieldType?: string;
@@ -309,9 +305,6 @@ function Tag(props: {
 		}
 
 		if (list && fieldType && app && activeFile) {
-			// console.log(value.toFormat("yyyy-MM-dd"));
-			// const nextDay = value.plus({ days: 2 });
-			// console.log(nextDay.toFormat("yyyy-MM-dd"));
 			const nextDay = DateTime.fromJSDate(date).plus({ hours: 9 });
 			await updateDateFieldInDoc(
 				app,
@@ -326,10 +319,13 @@ function Tag(props: {
 	return (
 		<div className="flex gap-2 items-center">
 			<p className="text-sm text-gray-500">
-				{title}: {value.toFormat("yyyy-MM-dd")}
+				{title}: {value?.toFormat("yyyy-MM-dd") || "..."}
 			</p>
 
-			<DatePicker date={value.toJSDate()} setDate={handleClick} />
+			<DatePicker
+				date={value?.toJSDate() || new Date()}
+				setDate={handleClick}
+			/>
 		</div>
 	);
 }
