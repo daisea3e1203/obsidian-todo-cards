@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "./root.css";
 import { useApp } from "@/hooks/useApp";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -96,11 +95,6 @@ export const CalendarViewRoot = () => {
 	const lists = file?.lists;
 
 	// Create initial state.
-	const [colNum] = useState(14);
-	const yesterday = new Date();
-	yesterday.setDate(yesterday.getDate() - 1);
-	const [date, setDate] = useState<Date>(yesterday);
-
 	if (!lists) {
 		return <div>No lists found in the file.</div>;
 	}
@@ -108,16 +102,15 @@ export const CalendarViewRoot = () => {
 	return (
 		<div className="h-full w-full overflow-auto dark p-4">
 			<div className={cn("gap-2 grid")}>
-				{Array.from({ length: colNum }).map((_, index) => {
-					const day = new Date(date);
-					day.setDate(date.getDate() + index);
+				{Array.from({ length: 14 }).map((_, index) => {
+					const day = new Date();
+					day.setDate(day.getDate() + index);
 					return (
 						<DayTile
 							key={day.toISOString()}
 							day={day}
 							lists={lists}
-							setDate={setDate}
-							date={date}
+							date={day}
 							app={app}
 							activeFile={activeFile}
 						/>
@@ -142,7 +135,6 @@ type ObsidianList = {
 function DayTile(props: {
 	day: Date;
 	lists: ObsidianList[];
-	setDate: (date: Date) => void;
 	date: Date;
 	app: any;
 	activeFile: TFile;
@@ -156,7 +148,6 @@ function DayTile(props: {
 	// Filter lists.
 	const lists = props.lists
 		.filter((list) => {
-			// const dates = [list.due, list.completion, list.scheduled];
 			const dates = [list.due, list.scheduled];
 			for (const date of dates) {
 				if (
@@ -262,7 +253,7 @@ function DayTile(props: {
 											<SquareIcon className="size-4" />
 										)}
 									</span>
-									<span>
+									<span className={cn("cursor-pointer")}>
 										{list.text
 											.split("\n")
 											.map((line, idx, arr) => (
