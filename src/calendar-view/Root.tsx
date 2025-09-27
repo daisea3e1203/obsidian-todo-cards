@@ -127,7 +127,7 @@ export const CalendarViewRoot = () => {
 
 	return (
 		<div className="h-full w-full overflow-auto dark p-4">
-			<div className={cn("gap-2 grid")}>
+			<div className={cn("gap-2 grid w-full")}>
 				{activeDates.map((date: Date, i: number) => {
 					return (
 						<DayTile
@@ -234,121 +234,108 @@ function DayTile(props: {
 			DateTime.fromJSDate(new Date()).toFormat("yyyy-MM-dd");
 
 	return (
-		<>
-			<div
-				className={cn("border rounded-md p-2")}
-				style={{
-					borderColor: isToday ? "#f0f0f0" : undefined,
-				}}
-			>
-				<div className="flex justify-between">
-					<p className="font-bold">{label}</p>
-					<p className="text-sm text-gray-500">{weekday}</p>
-				</div>
-				<div className="mt-2 flex flex-col gap-2">
-					{lists.length === 0 && (
-						<p className="text-sm text-gray-500">No items</p>
-					)}
-					{lists.map((list, i) => {
-						const parent = props.lists.find(
-							(l) => l.line === list.parent
-						);
-						return (
-							<div
-								key={i.toString()}
-								className="flex flex-col gap-1"
-							>
-								<div className="flex justify-between flex-wrap">
-									{parent && (
-										<p className="text-sm text-gray-500">
-											{parent.text}
-										</p>
-									)}
-									<div className="flex gap-2">
-										{[
-											{
-												label: "Sched",
-												value: list.scheduled,
-												fieldType: "scheduled",
-											},
-											{
-												label: "Due",
-												value: list.due,
-												fieldType: "due",
-											},
-										].map(
-											(
-												{ label, value, fieldType },
-												i
-											) => {
-												return (
-													<Tag
-														key={i.toString()}
-														title={label}
-														value={value}
-														list={list}
-														fieldType={fieldType}
-														app={props.app}
-														activeFile={
-															props.activeFile
-														}
-													/>
-												);
-											}
-										)}
-									</div>
-								</div>
-
-								<p
-									className={cn(
-										"flex gap-1 items-start",
-										list.isDue && "text-violet-400"
-									)}
-								>
-									<span
-										className="mt-[1px] cursor-pointer"
-										onClick={() => {
-											if (
-												list &&
-												props.app &&
-												props.activeFile
-											) {
-												updateCheckFieldInDoc(
-													props.app,
-													props.activeFile,
-													list.line,
-													!list.completed
-												);
-											}
-										}}
-									>
-										{list.completed ? (
-											<SquareCheckIcon className="size-4" />
-										) : (
-											<SquareIcon className="size-4" />
-										)}
-									</span>
-									<span className={cn("cursor-pointer")}>
-										{list.text
-											.split("\n")
-											.map((line, idx, arr) => (
-												<Fragment key={idx.toString()}>
-													{line}
-													{idx < arr.length - 1 && (
-														<br />
-													)}
-												</Fragment>
-											))}
-									</span>
-								</p>
-								<p className="flex gap-4"></p>
-							</div>
-						);
-					})}
-				</div>
+		<div
+			className={cn("border rounded-md p-2 w-full overflow-hidden")}
+			style={{
+				borderColor: isToday ? "#f0f0f0" : undefined,
+			}}
+		>
+			<div className="flex justify-between">
+				<p className="font-bold">{label}</p>
+				<p className="text-sm text-gray-500">{weekday}</p>
 			</div>
-			{weekday === "Sun" && <div className="border-b my-4" />}
-		</>
+			<div className="mt-2 flex flex-col gap-2">
+				{lists.length === 0 && (
+					<p className="text-sm text-gray-500">No items</p>
+				)}
+				{lists.map((list, i) => {
+					const parent = props.lists.find(
+						(l) => l.line === list.parent
+					);
+					return (
+						<div key={i.toString()} className="flex flex-col gap-1">
+							<div className="flex justify-between flex-wrap">
+								{parent && (
+									<p className="text-sm text-gray-500">
+										{parent.text}
+									</p>
+								)}
+								<div className="flex gap-2">
+									{[
+										{
+											label: "Sched",
+											value: list.scheduled,
+											fieldType: "scheduled",
+										},
+										{
+											label: "Due",
+											value: list.due,
+											fieldType: "due",
+										},
+									].map(({ label, value, fieldType }, i) => {
+										return (
+											<Tag
+												key={i.toString()}
+												title={label}
+												value={value}
+												list={list}
+												fieldType={fieldType}
+												app={props.app}
+												activeFile={props.activeFile}
+											/>
+										);
+									})}
+								</div>
+							</div>
+
+							<p
+								className={cn(
+									"flex gap-1 items-start",
+									list.isDue && "text-violet-400"
+								)}
+							>
+								<span
+									className="mt-[1px] cursor-pointer"
+									onClick={() => {
+										if (
+											list &&
+											props.app &&
+											props.activeFile
+										) {
+											updateCheckFieldInDoc(
+												props.app,
+												props.activeFile,
+												list.line,
+												!list.completed
+											);
+										}
+									}}
+								>
+									{list.completed ? (
+										<SquareCheckIcon className="size-4" />
+									) : (
+										<SquareIcon className="size-4" />
+									)}
+								</span>
+								<span
+									className={cn("cursor-pointer break-all")}
+								>
+									{list.text
+										.split("\n")
+										.map((line, idx, arr) => (
+											<Fragment key={idx.toString()}>
+												{line}
+												{idx < arr.length - 1 && <br />}
+											</Fragment>
+										))}
+								</span>
+							</p>
+							<p className="flex gap-4"></p>
+						</div>
+					);
+				})}
+			</div>
+		</div>
 	);
 }
 

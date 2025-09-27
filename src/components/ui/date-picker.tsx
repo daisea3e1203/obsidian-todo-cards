@@ -47,7 +47,7 @@ export function DatePicker(props: {
 				<Calendar
 					mode="single"
 					numberOfMonths={2}
-					selected={date}
+					defaultMonth={date}
 					onSelect={handleDateSelect}
 				/>
 			</PopoverContent>
