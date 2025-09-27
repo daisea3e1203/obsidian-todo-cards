@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import { cn } from "@/lib/utils";
 import { SquareCheckIcon, SquareIcon } from "lucide-react";
 import { TFile } from "obsidian";
+import { useMemo } from "react";
 
 const updateDateFieldInDoc = async (
 	app: any,
@@ -99,24 +100,48 @@ export const CalendarViewRoot = () => {
 		return <div>No lists found in the file.</div>;
 	}
 
+	const dates = lists.values
+		.map((list: ObsidianList) => {
+			return [list.due?.toJSDate(), list.scheduled?.toJSDate()];
+		})
+		.flat()
+		.filter((date: Date | undefined) => date !== undefined);
+	const activeDates = [...dates, new Date()]
+		.filter(
+			(date: Date, index: number, self: Date[]) =>
+				self.indexOf(date) === index
+		) // Remove duplicates
+		.sort((a: Date, b: Date) => a.getTime() - b.getTime());
+
+	const unscheduledItems = lists.values.filter((list: ObsidianList) => {
+		const isUnscheduled =
+			!list.due && !list.scheduled && list.checked !== undefined;
+		return isUnscheduled;
+	});
+
 	return (
 		<div className="h-full w-full overflow-auto dark p-4">
 			<div className={cn("gap-2 grid")}>
-				{Array.from({ length: 14 }).map((_, index) => {
-					const day = new Date();
-					day.setDate(day.getDate() + index);
+				{activeDates.map((date: Date) => {
 					return (
 						<DayTile
-							key={day.toISOString()}
-							day={day}
+							key={date.toISOString()}
 							lists={lists}
-							date={day}
+							date={date}
 							app={app}
 							activeFile={activeFile}
 						/>
 					);
 				})}
 			</div>
+
+			<div className="border-b my-4" />
+
+			<DayTile
+				lists={unscheduledItems}
+				app={app}
+				activeFile={activeFile}
+			/>
 		</div>
 	);
 };
@@ -126,6 +151,7 @@ type ObsidianList = {
 	list: number; // The line number of the uppermost ancestor list item.
 	parent: number; // The line number of the parent list item.
 	text: string; // The text of the list item.
+	checked?: boolean; // Whether the list item is checked.
 	completed?: boolean; // Whether the list item is completed.
 	completion?: DateTime; // The date of the completion of the list item.
 	scheduled?: DateTime; // The date of the scheduled of the list item.
@@ -133,22 +159,33 @@ type ObsidianList = {
 };
 
 function DayTile(props: {
-	day: Date;
 	lists: ObsidianList[];
-	date: Date;
+	date?: Date;
 	app: any;
 	activeFile: TFile;
 }) {
-	const { day } = props;
-	const yyyy = day.getFullYear();
-	const mm = String(day.getMonth() + 1).padStart(2, "0");
-	const dd = String(day.getDate()).padStart(2, "0");
-	const label = `${yyyy}-${mm}-${dd}`;
+	const label = useMemo(() => {
+		if (!props.date) {
+			return "Unscheduled";
+		}
+
+		const yyyy = props.date.getFullYear();
+		const mm = String(props.date.getMonth() + 1).padStart(2, "0");
+		const dd = String(props.date.getDate()).padStart(2, "0");
+		return `${yyyy}-${mm}-${dd}`;
+	}, [props.date]);
 
 	// Filter lists.
 	const lists = props.lists
 		.filter((list) => {
 			const dates = [list.due, list.scheduled];
+
+			// Unscheduled items are always included.
+			if (!props.date) {
+				return true;
+			}
+
+			// If the date is provided, only include matching items.
 			for (const date of dates) {
 				if (
 					date &&
@@ -168,21 +205,35 @@ function DayTile(props: {
 			return {
 				...list,
 				text: trimmedText,
+				isDue: list.due && list.due.toFormat("yyyy-MM-dd") === label,
 			};
 		});
 
-	const weekday = day
-		.toLocaleDateString(undefined, { weekday: "long" })
+	const weekday = props.date
+		?.toLocaleDateString(undefined, { weekday: "long" })
 		.slice(0, 3);
+
+	const isToday =
+		props.date &&
+		DateTime.fromJSDate(props.date).toFormat("yyyy-MM-dd") ===
+			DateTime.fromJSDate(new Date()).toFormat("yyyy-MM-dd");
 
 	return (
 		<>
-			<div className="border rounded-md p-2">
+			<div
+				className={cn("border rounded-md p-2")}
+				style={{
+					borderColor: isToday ? "#f0f0f0" : undefined,
+				}}
+			>
 				<div className="flex justify-between">
 					<p className="font-bold">{label}</p>
 					<p className="text-sm text-gray-500">{weekday}</p>
 				</div>
 				<div className="mt-2 flex flex-col gap-2">
+					{lists.length === 0 && (
+						<p className="text-sm text-gray-500">No items</p>
+					)}
 					{lists.map((list) => {
 						const parent = props.lists.find(
 							(l) => l.line === list.parent
@@ -229,7 +280,12 @@ function DayTile(props: {
 									</div>
 								</div>
 
-								<p className="flex gap-1 items-start">
+								<p
+									className={cn(
+										"flex gap-1 items-start",
+										list.isDue && "text-violet-400"
+									)}
+								>
 									<span
 										className="mt-[1px] cursor-pointer"
 										onClick={() => {
