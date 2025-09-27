@@ -1,11 +1,11 @@
 {
-	"id": "dabin-calendar",
-	"name": "Dabin Calendar",
+	"id": "dabin-todo-cards",
+	"name": "Todo Cards",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Calendar plugin for Obsidian",
+	"description": "Todo Cards plugin for Obsidian",
 	"author": "Daiki Hashimoto",
 	"authorUrl": "https://daikih.com",
 	"fundingUrl": "https://daikih.com",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }
