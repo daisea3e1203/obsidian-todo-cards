@@ -4,22 +4,8 @@ import { useApp } from "@/hooks/useApp";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTime } from "luxon";
 import { cn } from "@/lib/utils";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectValue,
-} from "@/components/ui/select";
-import { SelectTrigger } from "@/components/ui/select";
-import {
-	Columns2Icon,
-	Rows2Icon,
-	SquareCheckIcon,
-	SquareIcon,
-} from "lucide-react";
+import { SquareCheckIcon, SquareIcon } from "lucide-react";
 import { TFile } from "obsidian";
-
-type Layout = "vertical" | "horizontal";
 
 const updateDateFieldInDoc = async (
 	app: any,
@@ -61,6 +47,38 @@ const updateDateFieldInDoc = async (
 	}
 };
 
+const updateCheckFieldInDoc = async (
+	app: any,
+	file: TFile,
+	lineNumber: number,
+	newCheck: boolean
+) => {
+	try {
+		const content = await app.vault.read(file);
+		const lines = content.split("\n");
+
+		if (lineNumber >= 0 && lineNumber < lines.length) {
+			const line = lines[lineNumber];
+			const fieldPattern = new RegExp(`- \\[( |x)\\]`);
+
+			let updatedLine: string | undefined;
+			if (fieldPattern.test(line)) {
+				// Update existing field
+				updatedLine = line.replace(
+					fieldPattern,
+					`- [${newCheck ? "x" : " "}]`
+				);
+			}
+
+			lines[lineNumber] = updatedLine ?? line;
+			const newContent = lines.join("\n");
+			await app.vault.modify(file, newContent);
+		}
+	} catch (error) {
+		console.error("Error updating date field:", error);
+	}
+};
+
 export const CalendarViewRoot = () => {
 	const app = useApp();
 
@@ -82,7 +100,6 @@ export const CalendarViewRoot = () => {
 	const yesterday = new Date();
 	yesterday.setDate(yesterday.getDate() - 1);
 	const [date, setDate] = useState<Date>(yesterday);
-	const [layout, setLayout] = useState<Layout>("vertical");
 
 	if (!lists) {
 		return <div>No lists found in the file.</div>;
@@ -90,36 +107,7 @@ export const CalendarViewRoot = () => {
 
 	return (
 		<div className="h-full w-full overflow-auto dark p-4">
-			<div className="flex gap-4">
-				<DatePicker date={date} setDate={setDate} />
-				<Select
-					value={layout}
-					onValueChange={(value) => setLayout(value as Layout)}
-				>
-					<SelectTrigger>
-						<SelectValue placeholder="Select layout" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="vertical">
-							<Rows2Icon />
-						</SelectItem>
-						<SelectItem value="horizontal">
-							<Columns2Icon />
-						</SelectItem>
-					</SelectContent>
-				</Select>
-			</div>
-
-			<div className="h-4" />
-
-			<div
-				className={cn(
-					"gap-2",
-					layout === "vertical" && "grid",
-					layout === "horizontal" &&
-						"grid grid-flow-col auto-cols-[160px]"
-				)}
-			>
+			<div className={cn("gap-2 grid")}>
 				{Array.from({ length: colNum }).map((_, index) => {
 					const day = new Date(date);
 					day.setDate(date.getDate() + index);
@@ -128,7 +116,6 @@ export const CalendarViewRoot = () => {
 							key={day.toISOString()}
 							day={day}
 							lists={lists}
-							layout={layout}
 							setDate={setDate}
 							date={date}
 							app={app}
@@ -155,7 +142,6 @@ type ObsidianList = {
 function DayTile(props: {
 	day: Date;
 	lists: ObsidianList[];
-	layout: Layout;
 	setDate: (date: Date) => void;
 	date: Date;
 	app: any;
@@ -222,60 +208,72 @@ function DayTile(props: {
 											{parent.text}
 										</p>
 									)}
-									{props.layout === "vertical" && (
-										<div className="flex gap-2">
-											{[
-												{
-													label: "Sched",
-													value: list.scheduled,
-													fieldType: "scheduled",
-												},
-												{
-													label: "Due",
-													value: list.due,
-													fieldType: "due",
-												},
-												// {
-												// 	label: "Completed",
-												// 	value: list.completion,
-												// 	fieldType: "completion",
-												// },
-											].map(
-												({
-													label,
-													value,
-													fieldType,
-												}) => {
-													return (
-														<Tag
-															key={label}
-															title={label}
-															value={value}
-															list={list}
-															fieldType={
-																fieldType
-															}
-															app={props.app}
-															activeFile={
-																props.activeFile
-															}
-														/>
-													);
-												}
-											)}
-										</div>
-									)}
+									<div className="flex gap-2">
+										{[
+											{
+												label: "Sched",
+												value: list.scheduled,
+												fieldType: "scheduled",
+											},
+											{
+												label: "Due",
+												value: list.due,
+												fieldType: "due",
+											},
+										].map(({ label, value, fieldType }) => {
+											return (
+												<Tag
+													key={label}
+													title={label}
+													value={value}
+													list={list}
+													fieldType={fieldType}
+													app={props.app}
+													activeFile={
+														props.activeFile
+													}
+												/>
+											);
+										})}
+									</div>
 								</div>
 
-								<p className="flex gap-1 items-center">
-									<span>
+								<p className="flex gap-1 items-start">
+									<span
+										className="mt-[1px] cursor-pointer"
+										onClick={() => {
+											if (
+												list &&
+												props.app &&
+												props.activeFile
+											) {
+												updateCheckFieldInDoc(
+													props.app,
+													props.activeFile,
+													list.line,
+													!list.completed
+												);
+											}
+										}}
+									>
 										{list.completed ? (
 											<SquareCheckIcon className="size-4" />
 										) : (
 											<SquareIcon className="size-4" />
 										)}
 									</span>
-									<span>{list.text}</span>
+									<span>
+										{list.text
+											.split("\n")
+											.map((line, idx, arr) => (
+												<>
+													{line}
+													{idx < arr.length - 1 && (
+														<br />
+													)}
+												</>
+											))}
+									</span>
 								</p>
 								<p className="flex gap-4"></p>
 							</div>
