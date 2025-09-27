@@ -4,8 +4,13 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { DateTime } from "luxon";
 import { cn } from "@/lib/utils";
 import { SquareCheckIcon, SquareIcon } from "lucide-react";
-import { TFile } from "obsidian";
+import { Editor, TFile } from "obsidian";
 import { Fragment, useMemo } from "react";
+
+const getEditor = (app: any) => {
+	const view = app.workspace.getMostRecentLeaf()?.view;
+	return (view as any)?.editor as unknown as Editor | undefined; // Where do I get the latest obsidian api type...
+};
 
 const updateDateFieldInDoc = async (
 	app: any,
@@ -141,8 +146,6 @@ export const CalendarViewRoot = () => {
 					);
 				})}
 			</div>
-
-			<div className="border-b my-4" />
 
 			<DayTile
 				// lists={unscheduledItems}
@@ -315,7 +318,7 @@ function DayTile(props: {
 									)}
 								>
 									<span
-										className="mt-[1px] cursor-pointer"
+										className="mt-[3px] cursor-pointer"
 										onClick={() => {
 											if (
 												list &&
@@ -341,6 +344,29 @@ function DayTile(props: {
 										className={cn(
 											"cursor-pointer break-all"
 										)}
+										onClick={() => {
+											const editor = getEditor(props.app);
+											console.log("Editor: ", editor);
+											if (editor) {
+												// Set the cursor to the head of the item.
+												const originalText =
+													editor.getLine(list.line);
+												const chIndex =
+													originalText.indexOf("]");
+												editor.setCursor({
+													line: list.line,
+													ch: chIndex + 1,
+												});
+
+												// Set the active leaf to the editor.
+												props.app.workspace.setActiveLeaf(
+													props.app.workspace.getMostRecentLeaf(),
+													{
+														focus: true,
+													}
+												);
+											}
+										}}
 									>
 										{list.text
 											.split("\n")
@@ -360,7 +386,10 @@ function DayTile(props: {
 					})}
 				</div>
 			</div>
-			{!isNextDateInSameWeek && <div className="border-b my-4" />}
+			{/* Add divider if the next card is not in the same week or this is the last card. (Unscheduled card.) */}
+			{!isNextDateInSameWeek && props.date && (
+				<div className="border-b my-4" />
+			)}
 		</>
 	);
 }
