@@ -17,8 +17,48 @@ import {
 	SquareCheckIcon,
 	SquareIcon,
 } from "lucide-react";
+import { TFile } from "obsidian";
 
 type Layout = "vertical" | "horizontal";
+
+const updateDateFieldInDoc = async (
+	app: any,
+	file: TFile,
+	lineNumber: number,
+	fieldType: string,
+	newDate: Date
+) => {
+	try {
+		const content = await app.vault.read(file);
+		const lines = content.split("\n");
+
+		if (lineNumber >= 0 && lineNumber < lines.length) {
+			const line = lines[lineNumber];
+			const formattedDate = newDate.toISOString().split("T")[0];
+			const fieldPattern = new RegExp(
+				`\\[${fieldType}::\\s*\\d{4}-\\d{2}-\\d{2}\\]`
+			);
+
+			let updatedLine: string;
+			if (fieldPattern.test(line)) {
+				// Update existing field
+				updatedLine = line.replace(
+					fieldPattern,
+					`[${fieldType}::${formattedDate}]`
+				);
+			} else {
+				// Add new field at the end of the line
+				updatedLine = line.trim() + ` [${fieldType}::${formattedDate}]`;
+			}
+
+			lines[lineNumber] = updatedLine;
+			const newContent = lines.join("\n");
+			await app.vault.modify(file, newContent);
+		}
+	} catch (error) {
+		console.error("Error updating date field:", error);
+	}
+};
 
 export const CalendarViewRoot = () => {
 	const app = useApp();
@@ -33,16 +73,8 @@ export const CalendarViewRoot = () => {
 	// @ts-ignore
 	const dv: any = app.plugins.plugins.dataview.api as DataviewPageApi;
 	const page = dv.page(`${activeFile.path}`);
-	// console.log("PAGE: ", page);
 	const file = page?.file;
-	// console.log("FILE: ", file);
 	const lists = file?.lists;
-	// console.log("LISTS: ", lists);
-	// if (lists) {
-	// 	for (const list of lists) {
-	// 		console.log("LIST: ", list);
-	// 	}
-	// }
 
 	// Create initial state.
 	const [colNum] = useState(14);
@@ -57,7 +89,6 @@ export const CalendarViewRoot = () => {
 
 	return (
 		<div className="h-full w-full overflow-auto dark p-4">
-			{/* <h4>Tasks from {activeFile.basename}</h4> */}
 			<div className="flex gap-4">
 				<DatePicker date={date} setDate={setDate} />
 				<Select
@@ -80,15 +111,6 @@ export const CalendarViewRoot = () => {
 
 			<div className="h-4" />
 
-			{/* <div className="flex gap-4 items-center justify-center h-12"> */}
-			{/* <div>{colNum}</div> */}
-			{/* <Slider
-					value={[colNum]}
-					max={14}
-					min={1}
-					onValueChange={(value) => setColNum(value[0])}
-				/> */}
-			{/* </div> */}
 			<div
 				className={cn(
 					"gap-2",
@@ -106,6 +128,10 @@ export const CalendarViewRoot = () => {
 							day={day}
 							lists={lists}
 							layout={layout}
+							setDate={setDate}
+							date={date}
+							app={app}
+							activeFile={activeFile}
 						/>
 					);
 				})}
@@ -125,7 +151,15 @@ type ObsidianList = {
 	due?: DateTime; // The date of the due of the list item.
 };
 
-function DayTile(props: { day: Date; lists: ObsidianList[]; layout: Layout }) {
+function DayTile(props: {
+	day: Date;
+	lists: ObsidianList[];
+	layout: Layout;
+	setDate: (date: Date) => void;
+	date: Date;
+	app: any;
+	activeFile: TFile;
+}) {
 	const { day } = props;
 	const yyyy = day.getFullYear();
 	const mm = String(day.getMonth() + 1).padStart(2, "0");
@@ -192,29 +226,47 @@ function DayTile(props: { day: Date; lists: ObsidianList[]; layout: Layout }) {
 												{
 													label: "Scheduled",
 													value: list.scheduled,
+													fieldType: "scheduled",
 												},
 												{
 													label: "Due",
 													value: list.due,
+													fieldType: "due",
 												},
 												{
 													label: "Completed",
 													value: list.completion,
+													fieldType: "completion",
 												},
-											].map(({ label, value }) => {
-												if (value && value.toFormat) {
-													return (
-														<Tag
-															key={label}
-															title={label}
-															value={value.toFormat(
-																"yyyy-MM-dd"
-															)}
-														/>
-													);
+											].map(
+												({
+													label,
+													value,
+													fieldType,
+												}) => {
+													if (
+														value &&
+														!!value.toFormat
+													) {
+														return (
+															<Tag
+																key={label}
+																title={label}
+																value={value}
+																list={list}
+																fieldType={
+																	fieldType
+																}
+																app={props.app}
+																activeFile={
+																	props.activeFile
+																}
+															/>
+														);
+													}
+													return null;
 												}
-												return null;
-											})}
+											)}
 										</div>
 									)}
 								</div>
@@ -240,11 +292,42 @@ function DayTile(props: { day: Date; lists: ObsidianList[]; layout: Layout }) {
 	);
 }
 
-function Tag(props: { title: string; value: string }) {
-	const { title, value } = props;
+function Tag(props: {
+	title: string;
+	value: DateTime;
+	onClick?: () => void;
+	list?: ObsidianList;
+	fieldType?: string;
+	app?: any;
+	activeFile?: TFile;
+}) {
+	const { title, value, onClick, list, fieldType, app, activeFile } = props;
+
+	const handleClick = async () => {
+		if (onClick) {
+			onClick();
+		}
+
+		if (list && fieldType && app && activeFile) {
+			console.log(value.toFormat("yyyy-MM-dd"));
+			const nextDay = value.plus({ days: 2 });
+			console.log(nextDay.toFormat("yyyy-MM-dd"));
+			await updateDateFieldInDoc(
+				app,
+				activeFile,
+				list.line,
+				fieldType,
+				nextDay.toJSDate()
+			);
+		}
+	};
+
 	return (
-		<p className="text-sm text-gray-500">
-			{title}: {value}
+		<p
+			className="text-sm text-gray-500 cursor-pointer hover:text-gray-700"
+			onClick={handleClick}
+		>
+			{title}: {value.toFormat("yyyy-MM-dd")}
 		</p>
 	);
 }
