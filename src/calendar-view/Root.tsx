@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import { cn } from "@/lib/utils";
 import { SquareCheckIcon, SquareIcon } from "lucide-react";
 import { TFile } from "obsidian";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 
 const updateDateFieldInDoc = async (
 	app: any,
@@ -95,6 +95,12 @@ export const CalendarViewRoot = () => {
 	const file = page?.file;
 	const lists = file?.lists;
 
+	for (const list of lists.values as ObsidianList[]) {
+		if (list.text.includes("案出し")) {
+			console.log("LIST: ", list);
+		}
+	}
+
 	// Create initial state.
 	if (!lists) {
 		return <div>No lists found in the file.</div>;
@@ -106,7 +112,8 @@ export const CalendarViewRoot = () => {
 		})
 		.flat()
 		.filter((date: Date | undefined) => date !== undefined);
-	const activeDates = [...dates, new Date()]
+	// const activeDates = [...dates, new Date()]
+	const activeDates = dates
 		.filter(
 			(date: Date, index: number, self: Date[]) =>
 				self.indexOf(date) === index
@@ -122,10 +129,10 @@ export const CalendarViewRoot = () => {
 	return (
 		<div className="h-full w-full overflow-auto dark p-4">
 			<div className={cn("gap-2 grid")}>
-				{activeDates.map((date: Date) => {
+				{activeDates.map((date: Date, i: number) => {
 					return (
 						<DayTile
-							key={date.toISOString()}
+							key={i.toString()}
 							lists={lists}
 							date={date}
 							app={app}
@@ -138,7 +145,8 @@ export const CalendarViewRoot = () => {
 			<div className="border-b my-4" />
 
 			<DayTile
-				lists={unscheduledItems}
+				// lists={unscheduledItems}
+				lists={lists}
 				app={app}
 				activeFile={activeFile}
 			/>
@@ -182,7 +190,15 @@ function DayTile(props: {
 
 			// Unscheduled items are always included.
 			if (!props.date) {
-				return true;
+				if (
+					!list.scheduled &&
+					!list.due &&
+					list.checked !== undefined
+				) {
+					return true;
+				} else {
+					return false;
+				}
 			}
 
 			// If the date is provided, only include matching items.
@@ -234,14 +250,13 @@ function DayTile(props: {
 					{lists.length === 0 && (
 						<p className="text-sm text-gray-500">No items</p>
 					)}
-					{lists.map((list) => {
+					{lists.map((list, i) => {
 						const parent = props.lists.find(
 							(l) => l.line === list.parent
 						);
-						// console.log("PARENT: ", parent);
 						return (
 							<div
-								key={list.line}
+								key={i.toString()}
 								className="flex flex-col gap-1"
 							>
 								<div className="flex justify-between flex-wrap">
@@ -262,21 +277,26 @@ function DayTile(props: {
 												value: list.due,
 												fieldType: "due",
 											},
-										].map(({ label, value, fieldType }) => {
-											return (
-												<Tag
-													key={label}
-													title={label}
-													value={value}
-													list={list}
-													fieldType={fieldType}
-													app={props.app}
-													activeFile={
-														props.activeFile
-													}
-												/>
-											);
-										})}
+										].map(
+											(
+												{ label, value, fieldType },
+												i
+											) => {
+												return (
+													<Tag
+														key={i.toString()}
+														title={label}
+														value={value}
+														list={list}
+														fieldType={fieldType}
+														app={props.app}
+														activeFile={
+															props.activeFile
+														}
+													/>
+												);
+											}
+										)}
 									</div>
 								</div>
 
@@ -313,12 +333,12 @@ function DayTile(props: {
 										{list.text
 											.split("\n")
 											.map((line, idx, arr) => (
-												<>
+												<Fragment key={idx.toString()}>
 													{line}
 													{idx < arr.length - 1 && (
 														<br />
 													)}
-												</>
+												</Fragment>
 											))}
 									</span>
 								</p>
