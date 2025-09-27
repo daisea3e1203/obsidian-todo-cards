@@ -134,6 +134,7 @@ export const CalendarViewRoot = () => {
 							key={i.toString()}
 							lists={lists}
 							date={date}
+							nextDate={activeDates[i + 1] || undefined}
 							app={app}
 							activeFile={activeFile}
 						/>
@@ -168,6 +169,7 @@ type ObsidianList = {
 function DayTile(props: {
 	lists: ObsidianList[];
 	date?: Date;
+	nextDate?: Date;
 	app: any;
 	activeFile: TFile;
 }) {
@@ -228,114 +230,138 @@ function DayTile(props: {
 		?.toLocaleDateString(undefined, { weekday: "long" })
 		.slice(0, 3);
 
+	const isNextDateInSameWeek =
+		props.nextDate &&
+		props.date &&
+		DateTime.fromJSDate(props.nextDate).plus({ days: 0 }).weekNumber ===
+			DateTime.fromJSDate(props.date).plus({ days: 0 }).weekNumber;
+
 	const isToday =
 		props.date &&
 		DateTime.fromJSDate(props.date).toFormat("yyyy-MM-dd") ===
 			DateTime.fromJSDate(new Date()).toFormat("yyyy-MM-dd");
 
 	return (
-		<div
-			className={cn("border rounded-md p-2 w-full overflow-hidden")}
-			style={{
-				borderColor: isToday ? "#f0f0f0" : undefined,
-			}}
-		>
-			<div className="flex justify-between">
-				<p className="font-bold">{label}</p>
-				<p className="text-sm text-gray-500">{weekday}</p>
-			</div>
-			<div className="mt-2 flex flex-col gap-2">
-				{lists.length === 0 && (
-					<p className="text-sm text-gray-500">No items</p>
-				)}
-				{lists.map((list, i) => {
-					const parent = props.lists.find(
-						(l) => l.line === list.parent
-					);
-					return (
-						<div key={i.toString()} className="flex flex-col gap-1">
-							<div className="flex justify-between flex-wrap">
-								{parent && (
-									<p className="text-sm text-gray-500">
-										{parent.text}
-									</p>
-								)}
-								<div className="flex gap-2">
-									{[
-										{
-											label: "Sched",
-											value: list.scheduled,
-											fieldType: "scheduled",
-										},
-										{
-											label: "Due",
-											value: list.due,
-											fieldType: "due",
-										},
-									].map(({ label, value, fieldType }, i) => {
-										return (
-											<Tag
-												key={i.toString()}
-												title={label}
-												value={value}
-												list={list}
-												fieldType={fieldType}
-												app={props.app}
-												activeFile={props.activeFile}
-											/>
-										);
-									})}
-								</div>
-							</div>
-
-							<p
-								className={cn(
-									"flex gap-1 items-start",
-									list.isDue && "text-violet-400"
-								)}
+		<>
+			<div
+				className={cn("border rounded-md p-2 w-full overflow-hidden")}
+				style={{
+					borderColor: isToday ? "#f0f0f0" : undefined,
+				}}
+			>
+				<div className="flex gap-2">
+					<p className="font-bold">{label}</p>
+					<p className="text-sm text-gray-500">{weekday}</p>
+				</div>
+				<div className="mt-2 flex flex-col gap-2">
+					{lists.length === 0 && (
+						<p className="text-sm text-gray-500">No items</p>
+					)}
+					{lists.map((list, i) => {
+						const parent = props.lists.find(
+							(l) => l.line === list.parent
+						);
+						return (
+							<div
+								key={i.toString()}
+								className="flex flex-col gap-1"
 							>
-								<span
-									className="mt-[1px] cursor-pointer"
-									onClick={() => {
-										if (
-											list &&
-											props.app &&
-											props.activeFile
-										) {
-											updateCheckFieldInDoc(
-												props.app,
-												props.activeFile,
-												list.line,
-												!list.completed
-											);
-										}
-									}}
-								>
-									{list.completed ? (
-										<SquareCheckIcon className="size-4" />
-									) : (
-										<SquareIcon className="size-4" />
+								<div className="flex justify-between flex-wrap">
+									{parent && (
+										<p className="text-sm text-gray-500">
+											{parent.text}
+										</p>
 									)}
-								</span>
-								<span
-									className={cn("cursor-pointer break-all")}
+									<div className="flex gap-2">
+										{[
+											{
+												label: "Sched",
+												value: list.scheduled,
+												fieldType: "scheduled",
+											},
+											{
+												label: "Due",
+												value: list.due,
+												fieldType: "due",
+											},
+										].map(
+											(
+												{ label, value, fieldType },
+												i
+											) => {
+												return (
+													<Tag
+														key={i.toString()}
+														title={label}
+														value={value}
+														list={list}
+														fieldType={fieldType}
+														app={props.app}
+														activeFile={
+															props.activeFile
+														}
+													/>
+												);
+											}
+										)}
+									</div>
+								</div>
+
+								<p
+									className={cn(
+										"flex gap-1 items-start",
+										list.isDue && "text-violet-400",
+										list.checked && "text-gray-500"
+									)}
 								>
-									{list.text
-										.split("\n")
-										.map((line, idx, arr) => (
-											<Fragment key={idx.toString()}>
-												{line}
-												{idx < arr.length - 1 && <br />}
-											</Fragment>
-										))}
-								</span>
-							</p>
-							<p className="flex gap-4"></p>
-						</div>
-					);
-				})}
+									<span
+										className="mt-[1px] cursor-pointer"
+										onClick={() => {
+											if (
+												list &&
+												props.app &&
+												props.activeFile
+											) {
+												updateCheckFieldInDoc(
+													props.app,
+													props.activeFile,
+													list.line,
+													!list.completed
+												);
+											}
+										}}
+									>
+										{list.completed ? (
+											<SquareCheckIcon className="size-4" />
+										) : (
+											<SquareIcon className="size-4" />
+										)}
+									</span>
+									<span
+										className={cn(
+											"cursor-pointer break-all"
+										)}
+									>
+										{list.text
+											.split("\n")
+											.map((line, idx, arr) => (
+												<Fragment key={idx.toString()}>
+													{line}
+													{idx < arr.length - 1 && (
+														<br />
+													)}
+												</Fragment>
+											))}
+									</span>
+								</p>
+								<p className="flex gap-4"></p>
+							</div>
+						);
+					})}
+				</div>
 			</div>
-		</div>
+			{!isNextDateInSameWeek && <div className="border-b my-4" />}
+		</>
 	);
 }
 
