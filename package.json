@@ -1,5 +1,5 @@
 {
-	"name": "dabin-calendar-view-plugin",
+	"name": "obsidian-todo-cards-plugin",
 	"version": "1.0.0",
 	"description": "This is a calendar view plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",
