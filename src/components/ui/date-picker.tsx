@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,14 +23,25 @@ export function DatePicker(props: {
 				<Button
 					variant="outline"
 					data-empty={!date}
-					className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
+					size="icon"
+					className="data-[empty=true]:text-muted-foreground justify-start text-left font-normal size-6"
+					style={{
+						width: "24px",
+						height: "24px",
+						backgroundColor: "transparent",
+					}}
 				>
-					<CalendarIcon />
-					{date ? format(date, "PPP") : <span>Pick a date</span>}
+					<CalendarIcon className="size-4 text-gray-500" />
+					{/* {date ? format(date, "PPP") : <span>Pick a date</span>} */}
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent className="dark w-auto p-0">
-				<Calendar mode="single" selected={date} onSelect={setDate} />
+				<Calendar
+					mode="single"
+					numberOfMonths={2}
+					selected={date}
+					onSelect={setDate}
+				/>
 			</PopoverContent>
 		</Popover>
 	);

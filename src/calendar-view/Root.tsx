@@ -303,15 +303,16 @@ function Tag(props: {
 }) {
 	const { title, value, onClick, list, fieldType, app, activeFile } = props;
 
-	const handleClick = async () => {
+	const handleClick = async (date: Date) => {
 		if (onClick) {
 			onClick();
 		}
 
 		if (list && fieldType && app && activeFile) {
-			console.log(value.toFormat("yyyy-MM-dd"));
-			const nextDay = value.plus({ days: 2 });
-			console.log(nextDay.toFormat("yyyy-MM-dd"));
+			// console.log(value.toFormat("yyyy-MM-dd"));
+			// const nextDay = value.plus({ days: 2 });
+			// console.log(nextDay.toFormat("yyyy-MM-dd"));
+			const nextDay = DateTime.fromJSDate(date).plus({ hours: 9 });
 			await updateDateFieldInDoc(
 				app,
 				activeFile,
@@ -323,11 +324,12 @@ function Tag(props: {
 	};
 
 	return (
-		<p
-			className="text-sm text-gray-500 cursor-pointer hover:text-gray-700"
-			onClick={handleClick}
-		>
-			{title}: {value.toFormat("yyyy-MM-dd")}
-		</p>
+		<div className="flex gap-2 items-center">
+			<p className="text-sm text-gray-500">
+				{title}: {value.toFormat("yyyy-MM-dd")}
+			</p>
+
+			<DatePicker date={value.toJSDate()} setDate={handleClick} />
+		</div>
 	);
 }
