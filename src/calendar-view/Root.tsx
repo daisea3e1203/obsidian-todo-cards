@@ -1,7 +1,6 @@
 import { useState } from "react";
 import "./root.css";
 import { useApp } from "@/hooks/useApp";
-import { Slider } from "@/components/ui/slider";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTime } from "luxon";
 import { cn } from "@/lib/utils";
@@ -46,7 +45,7 @@ export const CalendarViewRoot = () => {
 	// }
 
 	// Create initial state.
-	const [colNum, setColNum] = useState(6);
+	const [colNum] = useState(14);
 	const yesterday = new Date();
 	yesterday.setDate(yesterday.getDate() - 1);
 	const [date, setDate] = useState<Date>(yesterday);
@@ -79,16 +78,17 @@ export const CalendarViewRoot = () => {
 				</Select>
 			</div>
 
-			<div className="flex gap-4 items-center justify-center h-12">
-				<div>{colNum}</div>
+			<div className="h-4" />
 
-				<Slider
+			{/* <div className="flex gap-4 items-center justify-center h-12"> */}
+			{/* <div>{colNum}</div> */}
+			{/* <Slider
 					value={[colNum]}
 					max={14}
 					min={1}
 					onValueChange={(value) => setColNum(value[0])}
-				/>
-			</div>
+				/> */}
+			{/* </div> */}
 			<div
 				className={cn(
 					"gap-2",
@@ -135,18 +135,15 @@ function DayTile(props: { day: Date; lists: ObsidianList[]; layout: Layout }) {
 	// Filter lists.
 	const lists = props.lists
 		.filter((list) => {
-			if (list.due && list.due.toFormat("yyyy-MM-dd") === label) {
-				return true;
-			} else if (
-				list.completion &&
-				list.completion.toFormat("yyyy-MM-dd") === label
-			) {
-				return true;
-			} else if (
-				list.scheduled &&
-				list.scheduled.toFormat("yyyy-MM-dd") === label
-			) {
-				return true;
+			const dates = [list.due, list.completion, list.scheduled];
+			for (const date of dates) {
+				if (
+					date &&
+					date.toFormat &&
+					date.toFormat("yyyy-MM-dd") === label
+				) {
+					return true;
+				}
 			}
 			return false;
 		})
@@ -161,76 +158,85 @@ function DayTile(props: { day: Date; lists: ObsidianList[]; layout: Layout }) {
 			};
 		});
 
-	return (
-		<div className="border rounded-md p-2">
-			<div className="flex justify-between">
-				<p className="font-bold">{label}</p>
-				<p className="text-sm text-gray-500">
-					{day
-						.toLocaleDateString(undefined, { weekday: "long" })
-						.slice(0, 3)}
-				</p>
-			</div>
-			<div className="mt-2 flex flex-col gap-2">
-				{lists.map((list) => {
-					const parent = props.lists.find(
-						(l) => l.line === list.parent
-					);
-					// console.log("PARENT: ", parent);
-					return (
-						<div key={list.line} className="flex flex-col gap-2">
-							<div className="flex justify-between">
-								{parent && (
-									<p className="text-sm text-gray-500">
-										{parent.text}
-									</p>
-								)}
-								{props.layout === "vertical" && (
-									<div className="flex gap-2">
-										{list.scheduled && (
-											<Tag
-												title="Scheduled"
-												value={list.scheduled.toFormat(
-													"yyyy-MM-dd"
-												)}
-											/>
-										)}
-										{list.due && (
-											<Tag
-												title="Due"
-												value={list.due.toFormat(
-													"yyyy-MM-dd"
-												)}
-											/>
-										)}
-										{list.completion && (
-											<Tag
-												title="Completed"
-												value={list.completion.toFormat(
-													"yyyy-MM-dd"
-												)}
-											/>
-										)}
-									</div>
-								)}
-							</div>
+	const weekday = day
+		.toLocaleDateString(undefined, { weekday: "long" })
+		.slice(0, 3);
 
-							<p className="flex gap-1 items-center">
-								<span>
-									{list.completed ? (
-										<SquareCheckIcon className="size-4" />
-									) : (
-										<SquareIcon className="size-4" />
+	return (
+		<>
+			<div className="border rounded-md p-2">
+				<div className="flex justify-between">
+					<p className="font-bold">{label}</p>
+					<p className="text-sm text-gray-500">{weekday}</p>
+				</div>
+				<div className="mt-2 flex flex-col gap-2">
+					{lists.map((list) => {
+						const parent = props.lists.find(
+							(l) => l.line === list.parent
+						);
+						// console.log("PARENT: ", parent);
+						return (
+							<div
+								key={list.line}
+								className="flex flex-col gap-1"
+							>
+								<div className="flex justify-between">
+									{parent && (
+										<p className="text-sm text-gray-500">
+											{parent.text}
+										</p>
 									)}
-								</span>
-								<span>{list.text}</span>
-							</p>
-							<p className="flex gap-4"></p>
-						</div>
-					);
-				})}
+									{props.layout === "vertical" && (
+										<div className="flex gap-2">
+											{[
+												{
+													label: "Scheduled",
+													value: list.scheduled,
+												},
+												{
+													label: "Due",
+													value: list.due,
+												},
+												{
+													label: "Completed",
+													value: list.completion,
+												},
+											].map(({ label, value }) => {
+												if (value && value.toFormat) {
+													return (
+														<Tag
+															key={label}
+															title={label}
+															value={value.toFormat(
+																"yyyy-MM-dd"
+															)}
+														/>
+													);
+												}
+												return null;
+											})}
+										</div>
+									)}
+								</div>
+
+								<p className="flex gap-1 items-center">
+									<span>
+										{list.completed ? (
+											<SquareCheckIcon className="size-4" />
+										) : (
+											<SquareIcon className="size-4" />
+										)}
+									</span>
+									<span>{list.text}</span>
+								</p>
+								<p className="flex gap-4"></p>
+							</div>
+						);
+					})}
+				</div>
 			</div>
-		</div>
+			{weekday === "Sun" && <div className="border-b my-4" />}
+		</>
 	);
 }
 
