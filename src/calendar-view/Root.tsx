@@ -113,10 +113,15 @@ export const CalendarViewRoot = () => {
 		.flat()
 		.filter((date: Date | undefined) => date !== undefined);
 	// const activeDates = [...dates, new Date()]
+	const dateLabels = dates.map((date: Date) => {
+		return DateTime.fromJSDate(date).toFormat("yyyy-MM-dd");
+	});
 	const activeDates = dates
 		.filter(
-			(date: Date, index: number, self: Date[]) =>
-				self.indexOf(date) === index
+			(date: Date, index: number) =>
+				dateLabels.indexOf(
+					DateTime.fromJSDate(date).toFormat("yyyy-MM-dd")
+				) === index
 		) // Remove duplicates
 		.sort((a: Date, b: Date) => a.getTime() - b.getTime());
 
