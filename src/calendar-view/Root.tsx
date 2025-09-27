@@ -120,12 +120,6 @@ export const CalendarViewRoot = () => {
 		) // Remove duplicates
 		.sort((a: Date, b: Date) => a.getTime() - b.getTime());
 
-	const unscheduledItems = lists.values.filter((list: ObsidianList) => {
-		const isUnscheduled =
-			!list.due && !list.scheduled && list.checked !== undefined;
-		return isUnscheduled;
-	});
-
 	return (
 		<div className="h-full w-full overflow-auto dark p-4">
 			<div className={cn("gap-2 grid")}>
