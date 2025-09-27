@@ -16,9 +16,17 @@ export function DatePicker(props: {
 	setDate: (date: Date) => void;
 }) {
 	const { date, setDate } = props;
+	const [open, setOpen] = React.useState(false);
+
+	const handleDateSelect = (selectedDate: Date | undefined) => {
+		if (selectedDate) {
+			setDate(selectedDate);
+			setOpen(false); // Hide the calendar after selection
+		}
+	};
 
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
 					variant="outline"
@@ -40,7 +48,7 @@ export function DatePicker(props: {
 					mode="single"
 					numberOfMonths={2}
 					selected={date}
-					onSelect={setDate}
+					onSelect={handleDateSelect}
 				/>
 			</PopoverContent>
 		</Popover>
